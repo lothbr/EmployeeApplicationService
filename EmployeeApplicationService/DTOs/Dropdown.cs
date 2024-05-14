@@ -4,5 +4,6 @@
     {
         public List<string>? Choice { get; set; }
         public string? Others { get; set; }
+        public string? ChoiceSelected { get; set; }
     }
 }

@@ -89,7 +89,7 @@ namespace EmployeeApplicationService.Controllers
         }
 
         [HttpPost("SubmitApplicationForm")]
-        public ActionResult CreateQuestion(CreateQuestionRequest request)
+        public ActionResult SubmitAppForm(SubmitFormRequest request)
         {
             return Ok();
         }
@@ -101,10 +101,15 @@ namespace EmployeeApplicationService.Controllers
             return Ok();
         }
 
-        [HttpGet("GetAll_ApplicationForms")]
-        public ActionResult GetAllForms(CreateQuestionRequest request)
+        [HttpGet("GetAll_CreatedApplicationForms")]
+        public async Task<ActionResult> GetAllForms()
         {
-            return Ok();
+            var formcreated = await _repository.GetAllCreatedForms();
+            if (formcreated.Count >0)
+            {
+                return Ok(formcreated);
+            }
+            return Ok("No Form Available at the Moment");
         }
 
         [HttpGet("GetApplicationForm_ByID")]

@@ -9,5 +9,6 @@ namespace EmployeeApplicationService.Interfaces
         public List<Question> GetQuestionsCreated(string questionId);
         public Response UpdateQuestion(QuestionRequests questionRequests);
         public Task<Response> CreateAppQuestions(CreateQuestionRequest? applicationData);
+        public Task<List<ApplicationData>> GetAllCreatedForms();
     }
 }

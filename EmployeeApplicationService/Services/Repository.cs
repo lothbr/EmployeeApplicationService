@@ -3,7 +3,10 @@ using EmployeeApplicationService.Data;
 using EmployeeApplicationService.DTOs;
 using EmployeeApplicationService.Interfaces;
 using EmployeeApplicationService.Models;
+using Microsoft.Azure.Cosmos;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Newtonsoft.Json;
+using System.ComponentModel;
 
 
 
@@ -56,6 +59,35 @@ namespace EmployeeApplicationService.Services
                 _logService.Error(MethodName, ex.Message);
             }
             return createAppResponse;
+        }
+
+        public async Task<List<ApplicationData>> GetAllCreatedForms()
+        {
+            var forms = new List<ApplicationData>();
+            try
+            {
+                _logService.Information("GetAllCreatedForms", $"Getting all Created Forms --->");
+                var client = new CosmosClient(_configService.GetCosmosEndpoint(), _configService.GetCosmoskey());
+                var container = client.GetContainer(_configService.GetCosmosDbName(), "ApplicationData");
+                var query = new QueryDefinition("SELECT * FROM c");
+                var result = container.GetItemQueryIterator<ApplicationData>(query);
+                while (result.HasMoreResults)
+                {
+                    var formcontents = await result.ReadNextAsync();
+                    foreach (var item in formcontents)
+                    {
+                        forms.Add(item);
+                    };
+                }
+               
+               
+            }
+            catch (Exception ex)
+            {
+                _logService.Error("GetAllCreatedForms", ex.Message);
+            }
+            return forms;
+            
         }
 
         public List<Question> GetQuestionsCreated(string questiontype)

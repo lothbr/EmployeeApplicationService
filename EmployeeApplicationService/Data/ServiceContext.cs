@@ -32,13 +32,15 @@ namespace EmployeeApplicationService.Data
                  .ToContainer("Profiles")
                  .HasPartitionKey(e => e.ProfileId);
 
-            modelBuilder.Entity<Question>()
-                 .ToContainer("Questions")
-                 .HasPartitionKey(e => e.QuestionId);
+            //modelBuilder.Entity<Question>()
+            //     .ToContainer("Questions")
+            //     .HasPartitionKey(e => e.QuestionId);
 
             modelBuilder.Entity<ApplicationData>()
                 .ToContainer("ApplicationData")
                 .HasPartitionKey(e => e.Id);
+
+            modelBuilder.Entity<ApplicationData>().OwnsMany(e => e.Questions);
                 
         }
     }
