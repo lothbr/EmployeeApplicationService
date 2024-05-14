@@ -16,6 +16,7 @@
 # Database using Local Cosmos Emulator 
 1. Employer Created the Application Forms
 ![image](https://github.com/lothbr/EmployeeApplicationService/assets/39369616/410d8c1e-820a-45e0-83a0-e0fa339980cf)
-2. Employer Edit Application Forms Function 
-
+2. Employer Edit Application Forms Snippet 
+![image](https://github.com/lothbr/EmployeeApplicationService/assets/39369616/c845df03-5185-463c-bf85-b6dcca71f2e2)
+3. 
 
