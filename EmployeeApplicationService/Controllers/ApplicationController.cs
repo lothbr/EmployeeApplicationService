@@ -1,8 +1,10 @@
-﻿using EmployeeApplicationService.Interfaces;
+﻿using EmployeeApplicationService.DTOs;
+using EmployeeApplicationService.Interfaces;
 using EmployeeApplicationService.Models;
 using EmployeeApplicationService.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace EmployeeApplicationService.Controllers
 {
@@ -82,10 +84,47 @@ namespace EmployeeApplicationService.Controllers
 
             }
         }
-        [HttpPut("EditApplicationForm")]
-        public ActionResult EditAppForm()
+        [HttpPut("EditApplicationForm/{ApplicationId}")]
+        public async Task<ActionResult> EditAppForm(string ApplicationId, [FromBody] UpdateApplicationform request )
         {
-            return Ok();
+            if (ValidationUtility.IsValidText(ApplicationId))
+            {
+                stopcheck = true;
+                stopMessage = "Invalid ID";
+            }
+
+            if (!stopcheck)
+            {
+                var getform = _repository.FindAppByID(ApplicationId);
+                if (!getform)
+                {
+                    stopcheck = true;
+                    stopMessage = "Unable to Locate Record";
+                }
+            }
+
+            if (!stopcheck)
+            {
+                foreach (var item in request?.Questions)
+                {
+                    var allowedQuestionType = _configuration.GetQuestionTypes().ToLower().Split(',');
+                    if (!allowedQuestionType.Any(e => e.Equals(item?.QuestionType?.ToLower())))
+                    {
+                        stopcheck = true;
+                        stopMessage = "Invalid QuestionType Detected";
+                    }
+                }
+            }
+            if (!stopcheck)
+            {
+                var response = await _repository.UpdateApplication(request, ApplicationId);
+                if (response.ResponseCode != "00")
+                {
+                    return Ok("Unable to Complete Request at the Moment");
+                }
+                return Ok(response);
+            }
+            return BadRequest(stopMessage);
         }
 
         [HttpPost("SubmitApplicationForm")]
@@ -112,10 +151,15 @@ namespace EmployeeApplicationService.Controllers
             return Ok("No Form Available at the Moment");
         }
 
-        [HttpGet("GetApplicationForm_ByID")]
-        public ActionResult GetFormByID(CreateQuestionRequest request)
+        [HttpGet("GetApplicationForm_ByID/{ApplicationId}")]
+        public async Task<ActionResult> GetFormByID(string ApplicationId)
         {
-            return Ok();
+            if (!ValidationUtility.IsValidText(ApplicationId))
+            {
+                return Ok(await _repository.GetSingleForm(ApplicationId));
+            }
+            
+            return BadRequest("Invalid Parameter on ApplicationId");
         }
     }
 }

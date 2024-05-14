@@ -4,9 +4,9 @@ using EmployeeApplicationService.DTOs;
 using EmployeeApplicationService.Interfaces;
 using EmployeeApplicationService.Models;
 using Microsoft.Azure.Cosmos;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Newtonsoft.Json;
-using System.ComponentModel;
+using System.Reflection.Metadata;
+
 
 
 
@@ -17,11 +17,13 @@ namespace EmployeeApplicationService.Services
         private readonly ILogService _logService;
         private readonly IConfigService _configService;
         private readonly ServiceContext _data;
+        private readonly CosmosClient _cosmosClientService;
         public Repository(ILogService logService, IConfigService configService)
         {
             _logService = logService;
             _configService = configService;
             _data = new ServiceContext(_configService);
+            _cosmosClientService = new CosmosClient(_configService.GetCosmosEndpoint(), _configService.GetCosmoskey());
         }
 
         public async Task<Response> CreateAppQuestions(CreateQuestionRequest? applicationData)
@@ -61,14 +63,23 @@ namespace EmployeeApplicationService.Services
             return createAppResponse;
         }
 
+        public bool FindAppByID(string appId)
+        {
+            var content = _data.Applications.Where(e=> e.Id == appId);
+            if (content.Count() >0)
+            {
+                return true;
+            }
+            return false;
+        }
+
         public async Task<List<ApplicationData>> GetAllCreatedForms()
         {
             var forms = new List<ApplicationData>();
             try
             {
                 _logService.Information("GetAllCreatedForms", $"Getting all Created Forms --->");
-                var client = new CosmosClient(_configService.GetCosmosEndpoint(), _configService.GetCosmoskey());
-                var container = client.GetContainer(_configService.GetCosmosDbName(), "ApplicationData");
+                var container = _cosmosClientService.GetContainer(_configService.GetCosmosDbName(), "ApplicationData");
                 var query = new QueryDefinition("SELECT * FROM c");
                 var result = container.GetItemQueryIterator<ApplicationData>(query);
                 while (result.HasMoreResults)
@@ -93,6 +104,33 @@ namespace EmployeeApplicationService.Services
         public List<Question> GetQuestionsCreated(string questiontype)
         {
             return  _data.Questions.Where(e=> e.QuestionType.ToLower() == questiontype.ToLower()).ToList();
+        }
+
+        public async Task<ApplicationData> GetSingleForm(string applicationId)
+        {
+            var form = new ApplicationData();
+            try
+            {
+                _logService.Information("GetSingleForm", $"Getting Single Forms --->");
+                var container = _cosmosClientService.GetContainer(_configService.GetCosmosDbName(), "ApplicationData");
+                var query = new QueryDefinition($"SELECT * FROM c where c.Id = \"{applicationId}\"");
+                var result = container.GetItemQueryIterator<ApplicationData>(query);
+                while (result.HasMoreResults)
+                {
+                    var formcontents = await result.ReadNextAsync();
+                    foreach (var item in formcontents)
+                    {
+                        form = (ApplicationData?) item;
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logService.Error("GetSingleForm", ex.Message);
+                
+            }
+
+            return form;
         }
 
         public async Task<Response> InsertQuestion(QuestionRequests questionRequests)
@@ -146,6 +184,39 @@ namespace EmployeeApplicationService.Services
                 _logService.Error(MethodName, ex.Message);
             }
             return questionResponse;
+        }
+
+        public async Task<Response> UpdateApplication(UpdateApplicationform request, string ID)
+        {
+            var MethodName = "UpdateApplication";
+            var response = new Response();
+            try
+            {
+                _logService.Information(MethodName, $"About to Update Application with Id {ID} --> {JsonConvert.SerializeObject(request)}");
+                var container = _cosmosClientService.GetContainer(_configService.GetCosmosDbName(), "ApplicationData");
+                var updaterequest = new ApplicationData()
+                {
+                    DateModified = DateTime.Now,
+                    ProgramDescription = request.ProgramDescription,
+                    Questions = request.Questions,
+                    ProgramTitle = request.ProgramTitle,
+                };
+                
+                var updateresult = await container.UpsertItemAsync(updaterequest ,new PartitionKey(updaterequest.Id));
+                if (updateresult.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    response.ResponseCode = "00";
+                    response.ResponseMessage = "Success";
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                _logService.Error(MethodName, ex.Message);
+                
+            }
+
+            return response;
         }
 
         public Response UpdateQuestion(QuestionRequests questionRequests)
