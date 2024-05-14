@@ -17,6 +17,14 @@
 1. Employer Created the Application Forms
 ![image](https://github.com/lothbr/EmployeeApplicationService/assets/39369616/410d8c1e-820a-45e0-83a0-e0fa339980cf)
 2. Employer Edit Application Forms Snippet 
-![image](https://github.com/lothbr/EmployeeApplicationService/assets/39369616/c845df03-5185-463c-bf85-b6dcca71f2e2)
-3. 
+var form = await _data.Applications.Where(e => e.Id == ID).FirstOrDefaultAsync();
+if (form != null)
+{
+    form.DateModified = DateTime.Now;
+    form.ProgramDescription = request.ProgramDescription;
+    form.Questions = request.Questions;
+    form.ProgramTitle = request.ProgramTitle;
+    var res = await _data.SaveChangesAsync();
+}
+4. 
 
