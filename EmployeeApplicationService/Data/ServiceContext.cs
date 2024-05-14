@@ -17,7 +17,7 @@ namespace EmployeeApplicationService.Data
         {
             _configService = configService;
         }
-        public DbSet<Profile> Profiles { get; set; }
+        //public DbSet<Profile> Profiles { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<ApplicationData> Applications { get; set; }
 
@@ -28,9 +28,9 @@ namespace EmployeeApplicationService.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Profile>()
-                 .ToContainer("Profiles")
-                 .HasPartitionKey(e => e.ProfileId);
+            //modelBuilder.Entity<Profile>()
+            //     .ToContainer("Profiles")
+            //     .HasPartitionKey(e => e.ProfileId);
 
             //modelBuilder.Entity<Question>()
             //     .ToContainer("Questions")

@@ -105,29 +105,29 @@ namespace EmployeeApplicationService.Controllers
             return Ok(response);
         }
 
-        [HttpPost("CreateQuestions")]
-        public async Task<ActionResult> PostQuestions(QuestionRequests requests) 
-        {
-            string MethodName = "PostQuestions";
-            var allowedQuestionType = _configService.GetQuestionTypes().ToLower().Split(',');
-            if (!allowedQuestionType.Any(e=> e.Equals(requests?.QuestionType?.ToLower())))
-            {
-                stopcheck = true;
-                stopMessage = "Invalid QuestionType";
-            }
+        //[HttpPost("CreateQuestions")]
+        //public async Task<ActionResult> PostQuestions(QuestionRequests requests) 
+        //{
+        //    string MethodName = "PostQuestions";
+        //    var allowedQuestionType = _configService.GetQuestionTypes().ToLower().Split(',');
+        //    if (!allowedQuestionType.Any(e=> e.Equals(requests?.QuestionType?.ToLower())))
+        //    {
+        //        stopcheck = true;
+        //        stopMessage = "Invalid QuestionType";
+        //    }
 
-            if (!stopcheck)
-            {
-                _logService.Information(MethodName, $"Request Received---> {JsonConvert.SerializeObject(requests)}");
+        //    if (!stopcheck)
+        //    {
+        //        _logService.Information(MethodName, $"Request Received---> {JsonConvert.SerializeObject(requests)}");
 
-                var response = await _repositories.InsertQuestion(requests);
-                if (response.ResponseCode== "00")
-                {
-                    return Ok(response);
-                }
-            }
-            return BadRequest(stopMessage);
-        }
+        //        var response = await _repositories.InsertQuestion(requests);
+        //        if (response.ResponseCode== "00")
+        //        {
+        //            return Ok(response);
+        //        }
+        //    }
+        //    return BadRequest(stopMessage);
+        //}
 
         [HttpGet("GetCreatedQuestion_By_QuestionTypes/{questionType}")]
         public ActionResult GetCreatedquestions (string questionType)

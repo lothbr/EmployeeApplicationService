@@ -8,7 +8,6 @@ namespace EmployeeApplicationService.DTOs
 {
     public class Question
     {
-        public string QuestionId { get; set; } = Guid.NewGuid().ToString();
         public string? QuestionContent { get; set; }
         public string? QuestionType { get; set; }
         public Dropdown? dropdowns { get; set; }

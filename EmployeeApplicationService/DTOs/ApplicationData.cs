@@ -12,6 +12,7 @@ namespace EmployeeApplicationService.DTOs
         public Profile? Profile { get; set; }
         public List<Question>? Questions { get; set; }
         public DateTime DateCreated { get; set; }
+        public DateTime DateAnswered { get; set; }
         public DateTime DateModified { get; set; }
     }
 }

@@ -13,5 +13,7 @@ namespace EmployeeApplicationService.Interfaces
         public Task<ApplicationData> GetSingleForm(string applicationId);
         public bool FindAppByID(string appId);
         Task<Response> UpdateApplication(UpdateApplicationform request, string id );
+        public Task<Response> DeleteApplication(string appId);
+        public Task<Response> SubmitApplication(ApplicationData applicationData, string ID);
     }
 }

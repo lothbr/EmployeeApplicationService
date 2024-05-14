@@ -1,10 +1,13 @@
 ﻿
+using Azure.Core;
 using EmployeeApplicationService.Data;
 using EmployeeApplicationService.DTOs;
 using EmployeeApplicationService.Interfaces;
 using EmployeeApplicationService.Models;
 using Microsoft.Azure.Cosmos;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Reflection;
 using System.Reflection.Metadata;
 
 
@@ -63,6 +66,40 @@ namespace EmployeeApplicationService.Services
             return createAppResponse;
         }
 
+        public async Task<Response> DeleteApplication(string appId)
+        {
+            var MethodName = "DeleteApplication";
+            var response = new Response();
+            try
+            {
+                //GET APPLICATION FORM 
+                var formcreated = await GetSingleForm(appId);
+                if (formcreated == null)
+                {
+                    response.ResponseCode = "01";
+                    response.ResponseMessage = "Unable to Complete Request, No Form Matches your Application Id";
+                    return response;
+                }
+
+                _logService.Information(MethodName, $"Delete Created Form --->");
+                var container = _cosmosClientService.GetContainer(_configService.GetCosmosDbName(), "ApplicationData");
+               
+                var updateresult = await container.DeleteItemAsync<ApplicationData>(formcreated.Id, new PartitionKey($"{appId}"));
+                response.ResponseCode = "00";
+                response.ResponseMessage = "Success";
+            }
+            catch(CosmosException ex)
+            {
+                if(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    response.ResponseCode = "02";
+                    response.ResponseMessage = "Unable to Locate Form";
+                }
+                _logService.Error(MethodName, ex.Message);
+            }
+            return response;
+        }
+
         public bool FindAppByID(string appId)
         {
             var content = _data.Applications.Where(e=> e.Id == appId);
@@ -103,7 +140,19 @@ namespace EmployeeApplicationService.Services
 
         public List<Question> GetQuestionsCreated(string questiontype)
         {
-            return  _data.Questions.Where(e=> e.QuestionType.ToLower() == questiontype.ToLower()).ToList();
+            var questionlist = new List<Question>();
+            var Questions=  _data.Applications.Select(e => e.Questions).ToList();
+            foreach (var item in Questions)
+            {
+                if (item.Any(e=> e.QuestionType.ToLower() == questiontype.ToLower()))
+                {
+                    foreach (var ques in item)
+                    {
+                        questionlist.Add(ques);
+                    }
+                }
+            }
+            return questionlist;
         }
 
         public async Task<ApplicationData> GetSingleForm(string applicationId)
@@ -186,6 +235,55 @@ namespace EmployeeApplicationService.Services
             return questionResponse;
         }
 
+        public async Task<Response> SubmitApplication(ApplicationData applicationData, string ID)
+        {
+            var methodName = "SubmitApplication";
+            var response = new Response();
+            try
+            {
+                _logService.Information(methodName, $"About to Submit Application with Id {ID} --> {JsonConvert.SerializeObject(applicationData)}");
+                var form = await _data.Applications.Where(e => e.Id == ID).FirstOrDefaultAsync();
+                if (form != null)
+                {
+                    form.Profile= applicationData.Profile;
+                    form.Questions= applicationData.Questions;
+                    form.DateCreated = applicationData.DateCreated;
+                    form.DateAnswered = applicationData.DateAnswered;
+                    form.DateModified = applicationData.DateModified;
+                    form.ProgramDescription= applicationData.ProgramDescription;
+                    form.ProgramTitle = applicationData.ProgramTitle;
+                    var res = await _data.SaveChangesAsync(); 
+                    if(res>0)
+                    {
+                        response.ResponseCode = "00";
+                        response.ResponseMessage = "Success";
+                    }
+                    else
+                    {
+                        response.ResponseCode = "01";
+                        response.ResponseMessage = "Something Went wrong while Submitting";
+                    }
+                }
+                else
+                {
+
+                    response.ResponseCode = "03";
+                    response.ResponseMessage = "Unable to Locate Record";
+                }
+
+
+                
+            }
+            catch (Exception ex)
+            {
+                response.ResponseCode = "02";
+                response.ResponseMessage = "Something Went Wrong";
+                _logService.Error(methodName, ex.Message);
+            }
+            _logService.Information(methodName, $"Operation Respone {ID} --> {JsonConvert.SerializeObject(response)}");
+            return response;
+        }
+
         public async Task<Response> UpdateApplication(UpdateApplicationform request, string ID)
         {
             var MethodName = "UpdateApplication";
@@ -193,28 +291,43 @@ namespace EmployeeApplicationService.Services
             try
             {
                 _logService.Information(MethodName, $"About to Update Application with Id {ID} --> {JsonConvert.SerializeObject(request)}");
-                var container = _cosmosClientService.GetContainer(_configService.GetCosmosDbName(), "ApplicationData");
-                var updaterequest = new ApplicationData()
+                var form = await _data.Applications.Where(e => e.Id == ID).FirstOrDefaultAsync();
+                if (form != null)
                 {
-                    DateModified = DateTime.Now,
-                    ProgramDescription = request.ProgramDescription,
-                    Questions = request.Questions,
-                    ProgramTitle = request.ProgramTitle,
-                };
-                
-                var updateresult = await container.UpsertItemAsync(updaterequest ,new PartitionKey(updaterequest.Id));
-                if (updateresult.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    response.ResponseCode = "00";
-                    response.ResponseMessage = "Success";
+                    form.DateModified = DateTime.Now;
+                    form.ProgramDescription = request.ProgramDescription;
+                    form.Questions = request.Questions;
+                    form.ProgramTitle = request.ProgramTitle;
+                    var res = await _data.SaveChangesAsync();
+                    if (res > 0)
+                    {
+                        response.ResponseCode = "00";
+                        response.ResponseMessage = "Success";
+                    }
+                    else
+                    {
+                        response.ResponseCode = "01";
+                        response.ResponseMessage = "Something Went wrong while Submitting";
+                    }
                 }
+                else
+                {
+                    response.ResponseCode = "02";
+                    response.ResponseMessage = "Unable to Locate Form";
+                }
+               
                 
             }
-            catch (Exception ex)
+            catch (CosmosException ex)
             {
+                if (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    response.ResponseCode = "02";
+                    response.ResponseMessage = "Unable to Locate Form";
+                }
                 _logService.Error(MethodName, ex.Message);
-                
             }
+            _logService.Information(MethodName, $"Operation Respone {ID} --> {JsonConvert.SerializeObject(response)}");
 
             return response;
         }

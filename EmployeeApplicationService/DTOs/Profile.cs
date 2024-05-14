@@ -7,8 +7,7 @@ namespace EmployeeApplicationService.DTOs
     public class Profile
     {
         
-        [Required]
-        public string? ProfileId { get; set; } = Guid.NewGuid().ToString();
+        
         [Required]
         public string? Firstname { get; set; }
         [Required]

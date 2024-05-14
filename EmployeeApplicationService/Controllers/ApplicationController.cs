@@ -64,17 +64,9 @@ namespace EmployeeApplicationService.Controllers
 
                 if (!stopcheck)
                 {
-                    var response = await _repository.CreateAppQuestions(applicationData);
-                    if (response.ResponseCode=="00")
-                    {
-                        return Ok(response);
-                    }
-                    else
-                    {
-                        return BadRequest();
-                    }
+                    return Ok( await _repository.CreateAppQuestions(applicationData));
+                    
                 }
-
 
                 return Ok(stopMessage);
             }
@@ -127,17 +119,85 @@ namespace EmployeeApplicationService.Controllers
             return BadRequest(stopMessage);
         }
 
-        [HttpPost("SubmitApplicationForm")]
-        public ActionResult SubmitAppForm(SubmitFormRequest request)
+        [HttpPost("SubmitApplicationForm/{ApplicationID}")]
+        public async Task<ActionResult> SubmitAppForm(string ApplicationID, SubmitFormRequest request)
         {
-            return Ok();
+            var GetForm = new ApplicationData();
+            try
+            {
+                if (request == null || request.Questions == null)
+                {
+                    stopcheck = true;
+                    stopMessage = "Unable to Create Application No questions Added";
+                }
+
+                if (!stopcheck)
+                {
+                    if (ValidationUtility.IsValidText(ApplicationID))
+                    {
+                        stopcheck = true;
+                        stopMessage = "Invalid ApplicationID";
+                    }
+                }
+
+                if (!stopcheck)
+                {
+                    foreach (var item in request.Questions)
+                    {
+                        var allowedQuestionType = _configuration.GetQuestionTypes().ToLower().Split(',');
+                        if (!allowedQuestionType.Any(e => e.Equals(item?.QuestionType?.ToLower())))
+                        {
+                            stopcheck = true;
+                            stopMessage = "Invalid QuestionType Detected";
+                        }
+                    }
+                }
+                if (!stopcheck)
+                {
+                    GetForm =await  _repository.GetSingleForm(ApplicationID);
+                    if (GetForm == null )
+                    {
+                        stopcheck = true;
+                        stopMessage = "Unable to Find Application Form";
+                    }
+                }
+
+                if (!stopcheck)
+                {
+                    return Ok( await _repository.SubmitApplication(new ApplicationData()
+                    {
+                        Id= GetForm?.Id?.Split('|')[1],
+                        ProgramTitle = GetForm?.ProgramTitle, 
+                        ProgramDescription = GetForm?.ProgramDescription,
+                        DateAnswered = DateTime.Now,
+                        Questions= request?.Questions,
+                        Profile= request?.Profile,
+                        DateCreated= GetForm.DateCreated,
+                        DateModified= DateTime.Now,
+                    },ApplicationID));
+
+                    
+                }
+            }
+            
+             catch (Exception ex)
+            {
+                return BadRequest(ex.StackTrace);
+
+            }
+            return Ok(stopMessage);
         }
+           
 
-
-        [HttpDelete("DeleteCreated_ApplicationForm")]
-        public ActionResult DeleteAppForm()
+        [HttpDelete("DeleteCreated_ApplicationForm/{AppFormID}")]
+        public async Task<ActionResult> DeleteAppForm(string AppFormID)
         {
-            return Ok();
+            if (!ValidationUtility.IsValidText(AppFormID))
+            {
+                return Ok(await _repository.DeleteApplication(AppFormID));
+            }
+
+            return BadRequest("Invalid Parameter on ApplicationId");
         }
 
         [HttpGet("GetAll_CreatedApplicationForms")]
