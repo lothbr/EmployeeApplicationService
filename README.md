@@ -14,9 +14,13 @@
   a. The question Controller handles the schematics of how the question is provided to be utilized in the application Controller
   b. the Application Controller is a robust CRUD operation that allows the front-end team to pass and rely completely on the backend environment to provide each         question.
 # Database using Local Cosmos Emulator 
-1. Employer Created the Application Forms
+ Application Forms
 ![image](https://github.com/lothbr/EmployeeApplicationService/assets/39369616/410d8c1e-820a-45e0-83a0-e0fa339980cf)
-2. Employer Edit Application Forms Snippet is provided via the put Endpoints on the Application Controller
 
-4. 
+# Dependency Injection 
+1. All services and Interfaces were injected to the controllers.
+2. All Models and DTOs were properly managed throughout the application
+
+
+Happy Viewing 🎉 🎉 
 
