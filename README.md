@@ -16,15 +16,7 @@
 # Database using Local Cosmos Emulator 
 1. Employer Created the Application Forms
 ![image](https://github.com/lothbr/EmployeeApplicationService/assets/39369616/410d8c1e-820a-45e0-83a0-e0fa339980cf)
-2. Employer Edit Application Forms Snippet 
-var form = await _data.Applications.Where(e => e.Id == ID).FirstOrDefaultAsync();
-if (form != null)
-{
-    form.DateModified = DateTime.Now;
-    form.ProgramDescription = request.ProgramDescription;
-    form.Questions = request.Questions;
-    form.ProgramTitle = request.ProgramTitle;
-    var res = await _data.SaveChangesAsync();
-}
+2. Employer Edit Application Forms Snippet is provided via the put Endpoints on the Application Controller
+
 4. 
 
